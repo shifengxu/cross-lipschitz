@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def linear_approx_boxc_l2(x, v, c, verbose=False):
+def linear_approx_boxc_l2(x, v, c, verbose=True):
     """
     Solves the optimization problem:
     min norm(delta)_2
@@ -32,6 +32,7 @@ def linear_approx_boxc_l2(x, v, c, verbose=False):
 
     x_sorted, v_sorted = x[ixx], v[ixx]
     lmbd_candidates = np.maximum(x_sorted / v_sorted, (x_sorted - 1) / v_sorted)
+    print(f"lmbd_candidates: {lmbd_candidates}")
     icc = np.argsort(lmbd_candidates)
     lmbds_sorted = lmbd_candidates[icc]
     tot = np.sum(v ** 2)
@@ -51,6 +52,7 @@ def linear_approx_boxc_l2(x, v, c, verbose=False):
             bdpart -= v[imm] * -x[imm]
         else:
             bdpart -= v[imm] * (1 - x[imm])
+        print(f"bdpart:{bdpart}; imm:{imm}; tot:{tot}")
         lmbd_opt = (bdpart - c) / tot
         if lmbd_opt > lmbds_sorted[counter - 1]:
             if verbose:
@@ -63,13 +65,31 @@ def linear_approx_boxc_l2(x, v, c, verbose=False):
 
     delta = np.maximum(-x, np.minimum(-lmbd_opt * v, 1 - x))
     if verbose:
-        print(lmbd_opt, np.linalg.norm(delta), delta, c, delta.dot(v), -lmbd_opt * tot + bdpart)
+        print(f"x           : {x}")
+        print(f"v           : {v}")
+        print(f"c           : {c}")
+        print(f"lmbd_opt    : {lmbd_opt}")
+        print(f"delta       : {delta}")
+        print(f"delta.dot(v): {delta.dot(v)}")
+        print(np.linalg.norm(delta))
+        print(-lmbd_opt * tot + bdpart)
 
     return delta, False
 
 
-# linear_approx_boxc_l2(np.array([0.1, 1.0, 1.0, 1.0]), np.array([-1.0, -1.5, -1.0, -2.0]), -1)
-
+# linear_approx_boxc_l2(np.array([0.3, 0.75, 0.8, 0.9]), np.array([3.0, 1.5, 1.0, 1.0]), -1.51)
+# x           : [0.3    0.75    0.8     0.9 ]
+# v           : [3.     1.5     1.      1. ]
+# c           : -1.51
+# lmbd_candidates: [0.1     0.5     0.8     0.9]
+# lmbd_opt       : 0.14353    <<< it is between 0.1 and 0.5
+# bdpart      :-0.9
+# imm         :1
+# tot         :4.25
+# delta       : [-0.3        -0.21529412    -0.14352941     -0.14352941]
+# delta.dot(v): -1.51
+# np.linalg.norm(delta)   : 0.42137
+# -lmbd_opt * tot + bdpart: -1.51
 
 # results = pool.map(linear_approx_boxc_l2, zip((x, v, c), (x, v, c)))
 # results = pool.starmap(linear_approx_boxc_l2, [(x, v, c), (x, v, c)])
